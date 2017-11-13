@@ -51,17 +51,14 @@ class BTreeNode(object) :
                 self.q += 1
             else: #if node has other keys
                 #loop through keys to find right position
-                # for i in range(q+1):
-                #
-                #     if keyPtr[0] > self.childKeyPtrs[i][1][0] and i < q:
-                #         continue
-                #     else:
-                #         self.childKeyPtrs = self.childKeyPtrs.insert(i,(None,keyPtr))
-                #         self.q += 1
-                if keyPtr[0] < self.childKeyPtrs[0][1][0]:
-                    self.childKeyPtrs = self.childKeyPtrs.insert(0,(None,keyPtr))
-                if keyPtr[0] < self.childKeyPtrs[1][1][0]:
-                    self.childKeyPtrs = self.childKeyPtrs.insert(i,(None,keyPtr))
+                for i in range(q+1):
+
+                    if keyPtr[0] > self.childKeyPtrs[i][1][0] and i < q:
+                        continue
+                    else:
+                        self.childKeyPtrs = self.childKeyPtrs.insert(i,(None,keyPtr))
+                        self.q += 1
+
             # if after insertion this node is overfull:
             if self.isOverfull():
 
