@@ -57,14 +57,27 @@ class BTreeIndex(object) :
             key_ptr = (key,ptr)
             # print('Key - pointer pair: {0}'.format(key_ptr))
 
+            current_node = self.root
 
-            return_val = self.root.insertDown(key_ptr)
+            if current_node.parent != None:
+                print('Error, root has a parent!')
+                input()
+
+            # return_val = current_node.insertDown(key_ptr)
+            # print('Return_value: {0}'.format(return_val))
+            current_node.insertDown(key_ptr)
             insert_counter += 1
             #if new root was created, reset the root
-            if isinstance(return_val,BTreeNode):
-                level_counter += 1
-                self.root = return_val
+
+            # if return_val != None:
+            #     level_counter += 1
+            #     self.root = return_val
+            #     print('Level Up!')
+
+            if current_node.parent != None:
                 print('Level Up!')
+                level_counter += 1
+                self.root = current_node.parent
 
             # print('------------------Printing from btreeindex------------------')
             # print('Key - pointer pair: {0}'.format(key_ptr))
@@ -83,31 +96,28 @@ class BTreeIndex(object) :
             print('Children of root: {0}'.format(self.root.children))
             print('Parent of root: {0}'.format(self.root.parent))
 
-            #print all children of root
-            for i in range(level_counter+1):
-                if i == 1:
+            for l in range(level_counter+1):
+                if l == 1:
                     print('------------------LEVEL 1------------------')
-                    for c in range(len(self.root.children)):
+                    for c in range(1,len(self.root.children)+1):
                         print('------------------CHILD {0}------------------'.format(c))
-                        print('Keys in child: {0}'.format(self.root.children[c].keys))
-                        print('Children of child: {0}'.format(self.root.children[c].children))
-                        print('Parent of child: {0}'.format(self.root.children[c].parent))
+                        print('Keys in child: {0}'.format(self.root.children[c-1].keys))
+                        print('Children of child: {0}'.format(self.root.children[c-1].children))
+                        print('Parent of child: {0}'.format(self.root.children[c-1].parent))
 
                         print('\n')
-                if i == 2:
+                if l == 2:
                     print('------------------LEVEL 2------------------')
-                    for child in self.root.children:
-                        c = 1
+                    for c in range(1,len(self.root.children)+1):
                         gc = 1
-                        for grandchild in child.children:
+                        for grandchild in self.root.children[c-1].children:
                             print('------------------GRANDCHILD {0} OF CHILD {1}------------------'.format(gc,c))
                             print('Keys in child: {0}'.format(grandchild.keys))
                             print('Children of child: {0}'.format(grandchild.children))
                             print('Parent of child: {0}'.format(grandchild.parent))
                             print(grandchild)
                             gc += 1
-                        c += 1
-            print('\n\n\n')
+                    print('\n\n\n')
 
             if insert_counter == 10:
                 break

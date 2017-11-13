@@ -40,9 +40,10 @@ class BTreeNode(object) :
         return (len(self.children) == 0)
 
     def insertDown(self, keyPtr) :
+
         '''Searches for the leaf node to insert a new key-pointer pair into, and does the insertion.
         Returns None, or a reference to the new root if one is created.'''
-
+        print('INSIDE insertDown')
         # print('------------------Printing from btreenode.insertDown------------------')
         # print('Key - pointer pair: {0}'.format(keyPtr))
         # print('P for current node: {0}'.format(self.p))
@@ -78,37 +79,49 @@ class BTreeNode(object) :
 
                 # if this node is root (and leaf!), call insertRoot()
                     if self.getParent() == None:
-                        return self.insertRoot()
+                        rv = self.insertRoot()
                 # if this node is not root
                     # call splitNode to push middle value up and create new sibling to hold right-most key
                     else:
-                        return self.splitNode()
+                        rv = self.splitNode()
+                        #print(rv)
+                        #return rv
             else:
-                return None
+                rv = None
 
 
+            print('LEAVING insertDown with return value of: {0}'.format(rv))
+            if rv != None:
+                print('new root children: {0}'.format(rv.children))
+            return rv
         # if this node has children, insert the key-ptr pair into the correct child and recurse
         else:
             #loop through all keys to locate correct child
             for i in range(self.q+1):
                 # if i less than number of keys and value in keyPtr greater than value in keys[i], continue loop
                 if i < self.q:
-                    if keyPtr[0] > self.keys[i][0]:
+                    if keyPtr[0] > self.keys[i][0]: #comparing value of current key-pointer to all keys of children
                         continue
                     else:
+                        print('RECURSING insertDown')
                         child = self.children[i]
                         child.insertDown(keyPtr)
                         break
                 else: # i == q+1 > q, value in keyPtr is greater than all other keys, so pick the right most child, which is self.children[i]
+                    print('RECURSING insertDown')
                     child = self.children[i]
                     child.insertDown(keyPtr)
 
+        # print('Leaving insertDown')
+        # print(rv)
+        # return rv
 
     def insertUp(self,keyPtr) :
         '''Inserts a key-pointer pair into parent of self.
         Typically called by an overfull child or sibling.
         Returns parent after insertion of key-pointer pair and index where it
         was inserted'''
+        print('INSIDE insertUp')
         parent = self.getParent()
         #loop through keys to find right position
         for i in range(parent.q+1):
@@ -125,7 +138,7 @@ class BTreeNode(object) :
                 parent.keys.append(keyPtr)
                 parent.q += 1
                 loc = i
-
+        print('LEAVING insertUp')
         return loc
 
     def splitNode(self) :
@@ -134,7 +147,7 @@ class BTreeNode(object) :
         recurse until a non-full parent or root is found.  If root is found,
         call insertRoot.  Returns None, or a reference to new root if one
         is created '''
-
+        print('INSIDE splitNode')
         # insert middle value of over-full self into parent, get parent after
         # insertion and the location of the insertion
         middle_keyptr = self.keys[self.p//2]
@@ -172,18 +185,39 @@ class BTreeNode(object) :
         if parent.isOverfull():
             #if parent is not root, recurse
             if parent.getParent() != None:
+                print('RECURSING splitNode')
                 parent.splitNode()
             else: #if parent is root, call insertRoot
-                return parent.insertRoot()
+                return_val = parent.insertRoot()
         #parent is not full, return none
         else:
-            return None
+            return_val = None
+
+        print('LEAVING splitNode with return value: {0}'.format(return_val))
+
+        return (return_val)
+
+        #if parent is full
+        # if parent.isOverfull():
+        #     #if parent is not root, recurse
+        #     if parent.getParent() != None:
+        #         parent.splitNode()
+        #     else: #if parent is root, call insertRoot
+        #         return parent.insertRoot()
+        # #parent is not full, return none
+        # else:
+        #     if parent.getParent() != None:
+        #         return None
+        #     else: #if parent is root but not full, return parent
+        #         return parent
+        # #if parent is not full
+        # if parent.getParent() == None:
 
     def insertRoot(self):
         '''Called when this node is root and overfull, creates a new parent/root node and
         a sibling node to contain half the entries.
         Returns a reference to the new root.'''
-
+        print('INSIDE insertRoot')
         # create a new parent/root node and a new sibling node
         # set the return value
         new_root = BTreeNode(self.p)
@@ -193,9 +227,9 @@ class BTreeNode(object) :
         sibling.setParent(new_root)
         self.setParent(new_root)
 
-        # move this node's middle key-pointer pair into the parent
+        # move this node's middle key-pointer pair into the parent, i.e. the new root
         middle_keyptr = self.keys[self.p//2]
-        self.insertUp(middle_keyptr)
+        loc = self.insertUp(middle_keyptr)
 
         # remove middle value from self
         self.keys.remove(middle_keyptr)
@@ -224,6 +258,9 @@ class BTreeNode(object) :
         #self is a leaf, thus has no children to split up
 
         #assign self and sibling as children of the new root
-        new_root.children = [self,sibling]
-
-        return new_root
+        #new_root.children = [self,sibling]
+        new_root.children.append(self)
+        new_root.children.append(sibling)
+        # print(new_root)
+        print('LEAVING insertRoot() with return value: {0}'.format(new_root))
+        return(new_root)
