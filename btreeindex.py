@@ -37,17 +37,77 @@ class BTreeIndex(object) :
 
         #get the range of i
         total_num_rec = 0
-        for page in list(os.walk(table_dir))[0][1]:
-            num_recs_current_page = len(list(os.walk('{0}/{1}'.format(table_dir,page)))[0][2])
+        for page in list(os.walk(self.table_dir))[0][1]:
+            num_recs_current_page = len(list(os.walk('{0}/{1}'.format(self.table_dir,page)))[0][2])
             total_num_rec += num_recs_current_page
 
 
+        level_counter = 0
+        insert_counter = 0
         for i in range(1, total_num_rec+1):
             ptr = '{0}/{1}/{2}'.format(self.table_dir,i//1000,i%1000)
-            infile = open(ptr)
-            key = infile.read().strip().split(',')[self.colnum]
-            infile.close()
+            record = list(csv.reader(open(ptr),delimiter=','))[0]
+            key_val = record[self.colnum]
+            key = "{0}".format(key_val)
+            print('Current Key: {0}'.format(key))
+            #if key is null for current record, skip to next record
+            if key == '':
+                continue
 
             key_ptr = (key,ptr)
-            current_node = self.root
-            current_node.insertDown(key_ptr)
+            # print('Key - pointer pair: {0}'.format(key_ptr))
+
+
+            return_val = self.root.insertDown(key_ptr)
+            insert_counter += 1
+            #if new root was created, reset the root
+            if isinstance(return_val,BTreeNode):
+                level_counter += 1
+                self.root = return_val
+                print('Level Up!')
+
+            # print('------------------Printing from btreeindex------------------')
+            # print('Key - pointer pair: {0}'.format(key_ptr))
+            # print('P for current node: {0}'.format(current_node.p))
+            # print('Q for current node: {0}'.format(current_node.q))
+            # print('Keys for current node: {0}'.format(current_node.keys))
+            # print('Children for current node: {0}'.format(current_node.children))
+            # print('Parent for current node: {0}'.format(current_node.parent))
+            # input()
+
+            #print tree at current state
+            print('Number of levels: {}'.format(level_counter))
+            print('------------------------ROOT------------------------')
+            print(self.root)
+            print('Keys in root: {0}'.format(self.root.keys))
+            print('Children of root: {0}'.format(self.root.children))
+            print('Parent of root: {0}'.format(self.root.parent))
+
+            #print all children of root
+            for i in range(level_counter+1):
+                if i == 1:
+                    print('------------------LEVEL 1------------------')
+                    for c in range(len(self.root.children)):
+                        print('------------------CHILD {0}------------------'.format(c))
+                        print('Keys in child: {0}'.format(self.root.children[c].keys))
+                        print('Children of child: {0}'.format(self.root.children[c].children))
+                        print('Parent of child: {0}'.format(self.root.children[c].parent))
+
+                        print('\n')
+                if i == 2:
+                    print('------------------LEVEL 2------------------')
+                    for child in self.root.children:
+                        c = 1
+                        gc = 1
+                        for grandchild in child.children:
+                            print('------------------GRANDCHILD {0} OF CHILD {1}------------------'.format(gc,c))
+                            print('Keys in child: {0}'.format(grandchild.keys))
+                            print('Children of child: {0}'.format(grandchild.children))
+                            print('Parent of child: {0}'.format(grandchild.parent))
+                            print(grandchild)
+                            gc += 1
+                        c += 1
+            print('\n\n\n')
+
+            if insert_counter == 10:
+                break
