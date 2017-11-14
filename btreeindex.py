@@ -23,6 +23,7 @@ class BTreeIndex(object) :
         else:
             print('Column named {} does not exist!'.format(column))
         infile.close()
+
         self.p = p
         self.root = BTreeNode(p)
 
@@ -47,12 +48,12 @@ class BTreeIndex(object) :
         for i in range(1, total_num_rec+1):
             ptr = '{0}/{1}/{2}'.format(self.table_dir,i//1000,i%1000)
             record = list(csv.reader(open(ptr),delimiter=','))[0]
-            key_val = record[self.colnum]
-            key = "{0}".format(key_val)
-            print('Current Key: {0}'.format(key))
+            key = record[self.colnum]
+            # key = "{0}".format(key_val)
+
             #if key is null for current record, skip to next record
             if key == '':
-                continue
+                key = 'NULL_{0}'.format(self.column)
 
             key_ptr = (key,ptr)
             # print('Key - pointer pair: {0}'.format(key_ptr))
@@ -63,8 +64,7 @@ class BTreeIndex(object) :
                 print('Error, root has a parent!')
                 input()
 
-            # return_val = current_node.insertDown(key_ptr)
-            # print('Return_value: {0}'.format(return_val))
+
             current_node.insertDown(key_ptr)
             insert_counter += 1
             #if new root was created, reset the root
@@ -78,15 +78,6 @@ class BTreeIndex(object) :
                 print('Level Up!')
                 level_counter += 1
                 self.root = current_node.parent
-
-            # print('------------------Printing from btreeindex------------------')
-            # print('Key - pointer pair: {0}'.format(key_ptr))
-            # print('P for current node: {0}'.format(current_node.p))
-            # print('Q for current node: {0}'.format(current_node.q))
-            # print('Keys for current node: {0}'.format(current_node.keys))
-            # print('Children for current node: {0}'.format(current_node.children))
-            # print('Parent for current node: {0}'.format(current_node.parent))
-            # input()
 
             #print tree at current state
             print('Number of levels: {}'.format(level_counter))
@@ -119,5 +110,10 @@ class BTreeIndex(object) :
                             gc += 1
                     print('\n\n\n')
 
+            # if (insert_counter%10000) == 0:
+            #     print('{0} insertions complete'.format(insert_counter))
+            #     print('Current level of tree is {0} \n'.format(level_counter))
+
             if insert_counter == 10:
+                print('Stopped inserting after 10 records.')
                 break
