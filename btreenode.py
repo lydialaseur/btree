@@ -1,18 +1,13 @@
 class BTreeNode(object) :
-    '''represents a node in a B-tree, containing q < p references to child nodes
-        and a key-pointer pair between each pair of references:
-
-        ... | child i | key i, ptr i | child i+1 | key i+1, ptr i+1 | ...
-
-        In the picture,
-
-            child node ref i refers to the root of a tree of nodes whose keys are <= key i
-            child node ref i+1 refers to the root of a tree of nodes whose keys are > key i and <= key i+1
-            key i is the value of a data column,
-            ptr i is an integer or string representing the location of a data record
-
-        Note: This Python implementation uses references to nodes instead of pointers to nodes.
-        In a leaf node each node reference is None.'''
+    '''Object represents a node in a b-tree that can have p children and q = p-1
+    key-value, data pointer pairs, without being overfull.  self.children is a list
+    of references to self's children nodes. self.keys is a list of (key,ptr) tuples
+    that are contained in the node. self.children[0] references all nodes less than
+    self.keys[0], self.children[1] references all nodes less than self.keys[1] or
+    greater than or equal to self.keys[0], and so on.  The number of children will
+    always be 1 greater than the number of keys. self.parent refers to the parent node
+    of self. if self is the root node, self.parent equal None.
+    '''
 
     def __init__(self, p) :
         self.p = p
@@ -33,30 +28,35 @@ class BTreeNode(object) :
     def isLeaf(self) :
         return (len(self.children) == 0)
 
-    def insertDown(self, keyPtr) :
+    def insertDown(self, key_ptr) :
 
         '''Searches for the leaf node to insert a new key-pointer pair into, and does the insertion.
         No return value.'''
 
-        # if this node is a leaf, insert the pair (node ref, (key, pointer))
+        # if this node is a leaf, insert the pair (key, pointer) tuple
         if self.isLeaf():
 
-            if self.q == 0: #if node is empty, just insert key_ptr
-                self.keys.append(keyPtr)
+            #if node is empty, just insert key_ptr
+            if self.q == 0:
+                self.keys.append(key_ptr)
                 self.q += 1
-            else: #if node has other keys
+            #if node has other keys
+            else:
                 #loop through keys to find right position
                 for i in range(self.q+1):
-                    # if i less than number of keys and value in keyPtr greater than or equal to value in keys[i], continue loop
+                    # if i less than number of keys
                     if i < self.q:
-                        if keyPtr[0] >= self.keys[i][0]: #if key value is greater than or equal to value of key already in node
+                        #and if key value is greater than or equal to value of key at index i in node, continue loop
+                        if key_ptr[0] >= self.keys[i][0]:
                             continue
+                        #if key value is less than key at index i in self, insert the key_ptr tuple before it
                         else:
-                            self.keys.insert(i,keyPtr)
+                            self.keys.insert(i,key_ptr)
                             self.q += 1
                             break
-                    else: # i == q+1 > q, value in keyPtr is greater than or equal to all other keys, so append it to the end of self.keys
-                        self.keys.append(keyPtr)
+                    # i == q+1 > q, value in key_ptr is greater than or equal to all other keys, so append it to the end of self.keys
+                    else:
+                        self.keys.append(key_ptr)
                         self.q += 1
 
             # if after insertion this node is overfull:
@@ -66,7 +66,7 @@ class BTreeNode(object) :
                     if self.getParent() == None:
                         self.insertRoot()
                 # if this node is not root
-                    # call splitNode to push middle value up and create new sibling to hold right-most key
+                    # call splitNode to push middle value up and create new sibling to hold right-most keys
                     else:
                         self.splitNode()
 
@@ -74,38 +74,43 @@ class BTreeNode(object) :
         else:
             #loop through all keys to locate correct child
             for i in range(self.q+1):
-                # if i less than number of keys and value in keyPtr greater than value in keys[i], continue loop
+                # if i less than total number of keys in node
                 if i < self.q:
-                    if keyPtr[0] >= self.keys[i][0]: #if key value is greater than or equal value of key already in node
+                    # and if key value is greater than or equal value of key already in node at index i, continue loop
+                    if key_ptr[0] >= self.keys[i][0]:
                         continue
+                    #if key value is less than key at index i in self, select the child at index i and insert key_ptr
                     else:
                         child = self.children[i]
-                        child.insertDown(keyPtr)
+                        child.insertDown(key_ptr)
                         break
-                else: # i == q+1 > q, value in keyPtr is greater than or equal to all other keys, so pick the right most child, which is self.children[i]
+                else: # i == q+1 > q, value in key_ptr is greater than or equal to all other keys, so pick the right most child, which is self.children[i]
                     child = self.children[i]
-                    child.insertDown(keyPtr)
+                    child.insertDown(key_ptr)
 
 
-    def insertUp(self,keyPtr) :
+    def insertUp(self,key_ptr) :
         '''Inserts a key-pointer pair into parent of self.
         Typically called by an overfull child or sibling.
         Returns index where key-pointer was pair was inserted'''
-
+        #get parent of self
         parent = self.getParent()
+
         #loop through keys to find right position
         for i in range(parent.q+1):
-            # if i less than number of keys in parent and value in keyPtr greater than or equal to value in parent.keys[i], continue loop
+            # if i less than number of keys in parent and value in key_ptr greater than or equal to value in parent.keys[i], continue loop
             if i < parent.q:
-                if keyPtr[0] >= parent.keys[i][0]: #if key value is greater than or equal to value of key already in node
+                #if key value is greater than or equal to value of key already in node, continue loop
+                if key_ptr[0] >= parent.keys[i][0]:
                     continue
                 else:
-                    parent.keys.insert(i,keyPtr)
+                    #if key value is less than key in parent at index i, insert before it, save location of insert
+                    parent.keys.insert(i,key_ptr)
                     parent.q += 1
                     loc = i
                     break
-            else: # i == q+1 > q, value in keyPtr is greater than or equal to all other keys, so append it to the end of self.keys
-                parent.keys.append(keyPtr)
+            else: # i == q+1 > q, value in key_ptr is greater than or equal to all other keys, so append it to the end of parent.keys
+                parent.keys.append(key_ptr)
                 parent.q += 1
                 loc = i
 
@@ -115,39 +120,38 @@ class BTreeNode(object) :
         '''Called by a over-full node. Moves middle key-pointer pair up to
         parent and splits self into 2 half-full nodes. If parent is then over-full,
         recurse until a non-full parent or root is found.  If root is found,
-        call insertRoot.  Returns None, or a reference to new root if one
-        is created '''
+        call insertRoot.  Returns nothing.'''
 
         # insert middle value of over-full self into parent, get parent after
         # insertion and the location of the insertion
-        middle_keyptr = self.keys[self.p//2]
-        loc = self.insertUp(middle_keyptr)
+        middle_key_ptr = self.keys[self.p//2]
+        loc = self.insertUp(middle_key_ptr)
 
         # remove middle value from self
-        self.keys.remove(middle_keyptr)
+        self.keys.remove(middle_key_ptr)
         self.q -= 1
+
         # create new sibling, remove right-most key from self, add to sibling
         sibling = BTreeNode(self.p)
-        rightmost_keyptr = self.keys.pop()
-        sibling.keys.append(rightmost_keyptr)
+        rightmost_key_ptr = self.keys.pop()
+        sibling.keys.append(rightmost_key_ptr)
         self.q -= 1
         sibling.q += 1
+
         #if self is not a leaf, i.e. has children, self keeps left half of children
         #and gives right half of children to sibling
         if not self.isLeaf():
-            #check that number of children is p+1
-            if len(self.children) != (self.p + 1):
-                print('Error in splitNode(). Number of children,{0}, does not equal p+1,{1}.'.format(len(self.children),self.p+1))
-                input()
-            else:
-                half = len(self.children)//2
-                sibling.children = self.children[half:]
-                self.children = self.children[:half]
-        #self is a leaf, thus has no children to split up
+            half = len(self.children)//2
+            sibling.children = self.children[half:]
+            self.children = self.children[:half]
+        #else self is a leaf, thus has no children to split up
+
 
         parent = self.getParent()
+
         #make parent of self, the parent of the new sibling
         sibling.setParent(parent)
+
         #add sibling to children of self's parent, in correct location
         parent.children.insert(loc+1,sibling)
 
@@ -155,15 +159,14 @@ class BTreeNode(object) :
         if parent.isOverfull():
             #if parent is not root, recurse
             if parent.getParent() != None:
-                # print('RECURSING splitNode')
                 parent.splitNode()
-            else: #if parent is root, call insertRoot
+            #if parent is root, call insertRoot
+            else:
                 parent.insertRoot()
 
     def insertRoot(self):
         '''Called when this node is root and overfull, creates a new parent/root node and
-        a sibling node to contain half the entries.
-        Returns a reference to the new root.'''
+        a sibling node to contain half the entries. Returns nothing.'''
 
         # create a new parent/root node and a new sibling node
         # set the return value
@@ -175,30 +178,26 @@ class BTreeNode(object) :
         self.setParent(new_root)
 
         # move this node's middle key-pointer pair into the parent, i.e. the new root
-        middle_keyptr = self.keys[self.p//2]
-        self.insertUp(middle_keyptr)
+        middle_key_ptr = self.keys[self.p//2]
+        self.insertUp(middle_key_ptr)
 
         # remove middle value from self
-        self.keys.remove(middle_keyptr)
+        self.keys.remove(middle_key_ptr)
         self.q -= 1
+
         # create new sibling, remove right-most key from self, add to sibling
-        rightmost_keyptr = self.keys.pop()
-        sibling.keys.append(rightmost_keyptr)
+        rightmost_key_ptr = self.keys.pop()
+        sibling.keys.append(rightmost_key_ptr)
         self.q -= 1
         sibling.q += 1
 
         #if self is not a leaf, i.e. has children, self keeps left half of children
         #and gives right half of children to sibling
         if not self.isLeaf():
-            #check that number of children is p+1
-            if len(self.children) != (self.p + 1):
-                print('Error in insertRoot(). Number of children,{0}, does not equal p+1,{1}.'.format(len(self.children),self.p+1))
-                input()
-            else:
-                half = len(self.children)//2
-                sibling.children = self.children[half:]
-                self.children = self.children[:half]
-        #self is a leaf, thus has no children to split up
+            half = len(self.children)//2
+            sibling.children = self.children[half:]
+            self.children = self.children[:half]
+        #else self is a leaf, thus has no children to split up
 
         #assign self and sibling as children of the new root
         #new_root.children = [self,sibling]

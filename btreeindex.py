@@ -30,90 +30,53 @@ class BTreeIndex(object) :
     def create(self):
         '''Creates a B-Tree index on the column.'''
 
-        # for each i, insert the key of the i-th record and a record pointer into the index.
-            # reset root if necessary
-
-        # return the number of records indexed.
-
-
-        #get the range of i
+        #get the total number of records to insert
         total_num_rec = 0
         for page in list(os.walk(self.table_dir))[0][1]:
             num_recs_current_page = len(list(os.walk('{0}/{1}'.format(self.table_dir,page)))[0][2])
             total_num_rec += num_recs_current_page
 
-
+        #initialize counter for number of levels in tree and counter for number
+        #of completed insertions
         level_counter = 0
         insert_counter = 0
+
+        #for each record in the "table"
         for i in range(1, total_num_rec+1):
+            #set pointer as path to record
             ptr = '{0}/{1}/{2}'.format(self.table_dir,i//1000,i%1000)
+            #set key as the value at specified column
             record = list(csv.reader(open(ptr),delimiter=','))[0]
             key = record[self.colnum]
-            # key = "{0}".format(key_val)
 
-            #if key is null for current record, skip to next record
+            #if key is an emoty string, i.e. if key is null, set key to more readable value
             if key == '':
                 key = 'NULL_{0}'.format(self.column)
 
+            #create key pointer pair as tuple containing the key value and a pointer to the corresponding record
             key_ptr = (key,ptr)
-            # print('Key - pointer pair: {0}'.format(key_ptr))
 
+            #set current node as the root of the tree so far
             current_node = self.root
 
-            if current_node.parent != None:
-                print('Error, root has a parent!')
-                input()
-
-
+            #insert the current key-pointer pair into the tree, increment instert counter
             current_node.insertDown(key_ptr)
             insert_counter += 1
-            #if new root was created, reset the root
 
-            # if return_val != None:
-            #     level_counter += 1
-            #     self.root = return_val
-            #     print('Level Up!')
-
+            #if root before insert now has a parent, reset the root as the parent, and increment the level counter
             if current_node.parent != None:
-                print('Level Up!')
+                # print('Level Up!')
                 level_counter += 1
                 self.root = current_node.parent
 
-            #print tree at current state
-            print('Number of levels: {}'.format(level_counter))
-            print('------------------------ROOT------------------------')
-            print(self.root)
-            print('Keys in root: {0}'.format(self.root.keys))
-            print('Children of root: {0}'.format(self.root.children))
-            print('Parent of root: {0}'.format(self.root.parent))
+            #print progress
+             if (insert_counter%100000) == 0:
+                print('{0} insertions complete'.format(insert_counter))
+                print('Current level of tree is {0} \n'.format(level_counter))
 
-            for l in range(level_counter+1):
-                if l == 1:
-                    print('------------------LEVEL 1------------------')
-                    for c in range(1,len(self.root.children)+1):
-                        print('------------------CHILD {0}------------------'.format(c))
-                        print('Keys in child: {0}'.format(self.root.children[c-1].keys))
-                        print('Children of child: {0}'.format(self.root.children[c-1].children))
-                        print('Parent of child: {0}'.format(self.root.children[c-1].parent))
+            # #stop after 10 records
+            # if insert_counter == 10:
+            #     print('Stopped inserting after 10 records.')
+            #     break
 
-                        print('\n')
-                if l == 2:
-                    print('------------------LEVEL 2------------------')
-                    for c in range(1,len(self.root.children)+1):
-                        gc = 1
-                        for grandchild in self.root.children[c-1].children:
-                            print('------------------GRANDCHILD {0} OF CHILD {1}------------------'.format(gc,c))
-                            print('Keys in child: {0}'.format(grandchild.keys))
-                            print('Children of child: {0}'.format(grandchild.children))
-                            print('Parent of child: {0}'.format(grandchild.parent))
-                            print(grandchild)
-                            gc += 1
-                    print('\n\n\n')
-
-            # if (insert_counter%10000) == 0:
-            #     print('{0} insertions complete'.format(insert_counter))
-            #     print('Current level of tree is {0} \n'.format(level_counter))
-
-            if insert_counter == 10:
-                print('Stopped inserting after 10 records.')
-                break
+        return(insert_counter,level_counter)
