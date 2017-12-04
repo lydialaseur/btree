@@ -169,7 +169,6 @@ class BTreeNode(object) :
         a sibling node to contain half the entries. Returns nothing.'''
 
         # create a new parent/root node and a new sibling node
-        # set the return value
         new_root = BTreeNode(self.p)
         sibling = BTreeNode(self.p)
 

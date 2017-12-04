@@ -36,8 +36,6 @@ class BTreeIndex(object) :
             num_recs_current_page = len(list(os.walk('{0}/{1}'.format(self.table_dir,page)))[0][2])
             total_num_rec += num_recs_current_page
 
-        #initialize counter for number of levels in tree and counter for number
-        #of completed insertions
         level_counter = 0
         insert_counter = 0
 
@@ -49,17 +47,14 @@ class BTreeIndex(object) :
             record = list(csv.reader(open(ptr),delimiter=','))[0]
             key = record[self.colnum]
 
-            #if key is an emoty string, i.e. if key is null, set key to more readable value
+            #if key is an empty string, i.e. if key is null, set key to more readable value
             if key == '':
                 key = 'NULL_{0}'.format(self.column)
 
-            #create key pointer pair as tuple containing the key value and a pointer to the corresponding record
             key_ptr = (key,ptr)
 
-            #set current node as the root of the tree so far
             current_node = self.root
 
-            #insert the current key-pointer pair into the tree, increment instert counter
             current_node.insertDown(key_ptr)
             insert_counter += 1
 
@@ -73,10 +68,5 @@ class BTreeIndex(object) :
              if (insert_counter%100000) == 0:
                 print('{0} insertions complete'.format(insert_counter))
                 print('Current level of tree is {0} \n'.format(level_counter))
-
-            # #stop after 10 records
-            # if insert_counter == 10:
-            #     print('Stopped inserting after 10 records.')
-            #     break
 
         return(insert_counter,level_counter)
