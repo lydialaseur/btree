@@ -1,4 +1,3 @@
-#import btreenode.BTreeNode
 from btreenode import BTreeNode
 import csv
 import os
@@ -65,7 +64,7 @@ class BTreeIndex(object) :
                 self.root = current_node.parent
 
             #print progress
-             if (insert_counter%100000) == 0:
+            if (insert_counter%100000) == 0:
                 print('{0} insertions complete'.format(insert_counter))
                 print('Current level of tree is {0} \n'.format(level_counter))
 

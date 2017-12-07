@@ -2,16 +2,16 @@ from btreeindex import BTreeIndex
 from btreenode import BTreeNode
 import os
 
-os.chdir('/usr/share/databases/FanFiction/')
+# os.chdir('/usr/share/databases/FanFiction/')
 
 table_dir = 'stories'
 col = 'AUTHOR'
 p = 3
 
 
-idx = BTreeIndex('stories',col,3)
+idx = BTreeIndex(table_dir,col,3)
 num_insertions, num_levels = idx.create()
-
+print(num_insertions)
 
 # print the first first 2 levels of the tree
 print('Number of levels: {}'.format(num_levels))
